@@ -88,8 +88,7 @@ export default {
     getDashboardDetails () {
       axios.get('https://kcloud-server-app.herokuapp.com/api/dashboard')
       .then((response) => {
-        this.items = response.data[0].data[0].data[0];
-        console.log('res', response.data[0].data[0].data[0]);
+        this.items = response.data[0].data;
       });
     },
     runScan () {
