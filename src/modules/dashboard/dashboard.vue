@@ -4,6 +4,8 @@
 
 <template>
   <div class="dashboard">
+    <button class="run-scan" @click="runScan">Run scan</button>
+    <span v-if="scanMessage"> {{ scanMessage }}</span>
     <h3 class="title">Dashboard</h3>
     <b-table
       :items="items"
@@ -21,7 +23,20 @@
       <template v-slot:row-details="row">
         <b-card>
           <b-row class="mb-2">
-            <b-col>{{ row.item }}</b-col>
+            <ul class="list">
+              <li class="list-item" v-for="item in row.item.meta" :key="item">
+                <div>Status: {{ item.status }}</div>
+                <div>Failure introduced: {{ item.failure_introduced }}</div>
+                <div>Message: {{ item.message }}</div>
+                <div>Account: {{ item.account }}</div>
+                <div>Region: {{ item.region }}</div>
+                <div>Description: {{ item.description }}</div>
+                <div>Group Id: {{ item.group_id }}</div>
+                <div>Group Name: {{ item.group_name }}</div>
+                <div>VPC Id: {{ item.vpc_id }}</div>
+                <hr/>
+              </li>
+            </ul>
           </b-row>
         </b-card>
       </template>
@@ -36,6 +51,7 @@
 
 <script>
 import { BTable, BPagination } from 'bootstrap-vue';
+import axios from 'axios';
 
 export default {
   name: 'dashboard',
@@ -48,15 +64,9 @@ export default {
       currentPage: 1,
       perPage: 2,
       rule: {},
-      fields: ['rule', 'service', 'categories', 'show_details'],
-      items: [
-        { id: 1, rule: 'AMI Naming Conventions', service: 'EC2', categories: 'Security', _showDetails: false },
-        { id: 2, rule: 'AWS AMI Encryption', service: 'EC2', categories: 'Security', _showDetails: false },
-        { id: 3, rule: 'Account Instance Limit', service: 'EC2', categories: 'Security', _showDetails: false },
-        { id: 4, rule: 'App-Tier EC2 Instance Using IAM Roles', service: 'EC2', categories: 'Security', _showDetails: false },
-        { id: 5, rule: 'App-Tier Publicly Shared AMI', service: 'EC2', categories: 'Security', _showDetails: false },
-        { id: 6, rule: 'Publicly Shared AMI', service: 'EC2', categories: 'Security', _showDetails: false }
-      ]
+      fields: ['rule', 'service', 'categories', 'riskLevel', 'counts', 'show_details'],
+      items: [],
+      scanMessage: ''
     }
   },
   computed: {
@@ -74,7 +84,27 @@ export default {
       } else {
         row.item._showDetails = false;
       }
+    },
+    getDashboardDetails () {
+      axios.get('https://kcloud-server-app.herokuapp.com/api/dashboard')
+      .then((response) => {
+        this.items = response.data[0].data[0].data[0];
+        console.log('res', response.data[0].data[0].data[0]);
+      });
+    },
+    runScan () {
+      this.scanMessage = 'Running...';
+      axios.get('https://kcloud-server-app.herokuapp.com/api/services')
+      .then((response) => {
+        if (response) {
+          this.scanMessage = 'Ran successfully';
+          window.location.assign('/dashboard');
+        }
+      });
     }
+  },
+  mounted () {
+    this.getDashboardDetails();
   }
 };
 </script>
